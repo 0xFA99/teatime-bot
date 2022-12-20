@@ -19,9 +19,11 @@ set_target_properties(
         SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
-target_sources(${PROJECT_NAME} PRIVATE src/exec_command.cpp)
+target_sources(${PROJECT_NAME} PRIVATE
+        src/exec_command.cpp
+        src/gen_password.cpp)
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 target_include_directories(
         ${PROJECT_NAME}

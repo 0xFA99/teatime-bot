@@ -9,7 +9,7 @@ add_subdirectory(helper)
 
 add_executable(${PROJECT_NAME} bot/main.cpp)
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         dpp silly_helper)
