@@ -4,6 +4,7 @@
 
 #include "commands/exec_command.h"
 #include "cryptography/gen_password.h"
+#include "cryptography/encryption/xor_encryption.h"
 
 const std::string    BOT_TOKEN    = "";
 
@@ -32,15 +33,26 @@ int main() {
         dpp::command_interaction cmd_data = interaction.get_command_interaction();
 
         if (interaction.get_command_name() == "cryptography") {
+
             if (cmd_data.options[0].name == "password") {
                 if (cmd_data.options[0].options[0].name == "generate") {
-                    int64_t l = std::get<int64_t>(event.get_parameter("length"));
-                    bool a = std::get<bool>(event.get_parameter("use_alpha"));
-                    bool n = std::get<bool>(event.get_parameter("use_numeric"));
-                    bool s = std::get<bool>(event.get_parameter("use_special"));
+                    int64_t l   = std::get<int64_t>(cmd_data.options[0].options[0].options[0].value);
+                    bool a      = std::get<bool>(cmd_data.options[0].options[0].options[1].value);
+                    bool n      = std::get<bool>(cmd_data.options[0].options[0].options[2].value);
+                    bool s      = std::get<bool>(cmd_data.options[0].options[0].options[3].value);
 
                     std::string password = silly::utils::gen_password(l, a, n, s);
                     event.reply(password);
+                }
+            }
+
+            else if (cmd_data.options[0].name == "encryption") {
+                if (cmd_data.options[0].options[0].name == "xor_chipper") {
+                    std::string t = std::get<std::string>(cmd_data.options[0].options[0].options[0].value);
+                    std::string k = std::get<std::string>(cmd_data.options[0].options[0].options[1].value);
+
+                    std::string result = silly::utils::xor_encryption(t, k);
+                    event.reply(dpp::message(result).set_flags(dpp::m_ephemeral));
                 }
             }
         }
@@ -94,14 +106,24 @@ int main() {
                 dpp::command_option(dpp::co_string, "query", "write your shell command here...", true)
             );
 
-            cryptography_command.add_option(
+            cryptography_command
+            .add_option(
                 dpp::command_option(dpp::command_option(dpp::co_sub_command_group, "password", "Manage Password"))
                 .add_option(dpp::command_option(dpp::co_sub_command, "generate", "Generate Password")
-                .add_option(dpp::command_option(dpp::co_integer, "length", "length pass", true))
-                .add_option(dpp::command_option(dpp::co_boolean, "use_alpha", "use alpha", true))
-                .add_option(dpp::command_option(dpp::co_boolean, "use_numeric", "use numeric", true))
-                .add_option(dpp::command_option(dpp::co_boolean, "use_special", "use special symbol", true))
-            ));
+                    .add_option(dpp::command_option(dpp::co_integer, "length", "length pass", true))
+                    .add_option(dpp::command_option(dpp::co_boolean, "use_alpha", "use alpha", true))
+                    .add_option(dpp::command_option(dpp::co_boolean, "use_numeric", "use numeric", true))
+                    .add_option(dpp::command_option(dpp::co_boolean, "use_special", "use special symbol", true))
+                )
+            )
+            .add_option(
+                dpp::command_option(dpp::command_option(dpp::co_sub_command_group, "encryption", "Covert Text into an encoded format"))
+                .add_option(dpp::command_option(dpp::co_sub_command, "xor_chipper", "Encrypt method use of the operator XOR")
+                    .add_option(dpp::command_option(dpp::co_string, "plaintext", "Enter your plaintext", true))
+                    .add_option(dpp::command_option(dpp::co_string, "encrypt_key", "Key is like 'A', 'ABC', 'XYZ321', etc.", true))
+                )
+            );
+
 
             // Register Commands
             bot.global_command_create(help_command);

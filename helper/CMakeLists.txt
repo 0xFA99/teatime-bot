@@ -21,7 +21,8 @@ set_target_properties(
 
 target_sources(${PROJECT_NAME} PRIVATE
         src/exec_command.cpp
-        src/gen_password.cpp)
+        src/gen_password.cpp
+        src/xor_cryptography.cpp)
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
