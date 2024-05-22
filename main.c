@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "concord/discord.h"
 #include "concord/log.h"
@@ -23,6 +24,7 @@ main(int argc, char *argv[])
 	ccord_global_init();
 
 	struct discord *client = discord_config_init(config_file);
+	assert(NULL != client && "Couldn't initialize client");
 
 	discord_set_on_command(client, "!weather_create", &on_slash_command_create);
 	discord_set_on_ready(client, &on_ready);
@@ -42,6 +44,28 @@ on_ready(struct discord *client, const struct discord_ready *event)
 			event->user->username, event->user->discriminator);
 
 	g_app_id = event->application->id;
+
+	// PRESENCES
+	struct discord_activity activities[] = {
+		{
+			.name = "Mocca :3",
+			.type = DISCORD_ACTIVITY_LISTENING,
+			.details = "Waiting some order!"
+		}
+	};
+
+	struct discord_presence_update status = {
+		.activities =
+			&(struct discord_activities) {
+				.size = sizeof(activities) / sizeof *activities,
+				.array = activities
+			},
+		.status = "online",
+		.afk = false,
+		.since = discord_timestamp(client)
+	};
+
+	discord_update_presence(client, &status);
 }
 
 void
