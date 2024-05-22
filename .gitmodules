@@ -1,3 +1,4 @@
-[submodule "DPP"]
-    path = lib/DPP
-    url = https://github.com/brainboxdotcc/DPP
+[submodule "concord"]
+    path = include/concord
+	url = https://github.com/Cogmasters/concord/tree/master/include
+
