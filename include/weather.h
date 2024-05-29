@@ -3,17 +3,14 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <json-c/json.h>
 
+#define HTTP_REQUEST_IMPLEMENTATION
 #include "http_request.h"
 
-#define PARSING_JSON_IMPLEMENTATION
-#include "parsing_json.h"
-
+#define WEATHER_DEFAULT_CITY_ID "1850144"
 #define WEATHER_URL_FORMAT "https://api.openweathermap.org/data/2.5/weather?id=%s&appid=%s&unit=metric"
 #define WEATHER_API_KEY "0755c771fe75b0120ec32ae2e76d84e7"
-#define WEATHER_ARRAY_CAP 24
-
-#define LINK_MAX 127
 
 struct WeatherApi {
 	char *city;
@@ -34,24 +31,47 @@ int parsingWeatherData(struct WeatherApi *WApi, struct WeatherData *WData);
 static const char*
 createWeatherApiURL(struct WeatherApi *api)
 {
-	char *newURL = (char *)malloc(LINK_MAX);
+	char *newURL = (char *)malloc(127);
 	if (newURL == NULL) {
 		fprintf(stderr, "[ERROR] Failed to allocation memory.\n");
 		return NULL;
 	}
 
-	snprintf(newURL, LINK_MAX, WEATHER_URL_FORMAT, api->city, api->api);
+	snprintf(newURL, 127, WEATHER_URL_FORMAT, api->city, api->api);
 
 	return (const char *)newURL;
+}
+
+static void
+parsingJsonWeather(json_object *json, struct WeatherData *WData)
+{
+	struct json_object *object_array;
+	struct json_object *object_entry;
+	struct json_object *object_value;
+
+	json_object_object_get_ex(json, "name", &object_value);
+	WData->city = (char *)json_object_get_string(object_value);
+
+	json_object_object_get_ex(json, "sys", &object_array);
+	json_object_object_get_ex(object_array, "country", &object_value);
+	WData->country = (char *)json_object_get_string(object_value);
+
+	json_object_object_get_ex(json, "weather", &object_array);
+	object_entry = json_object_array_get_idx(object_array, 0);
+
+	json_object_object_get_ex(object_entry, "main", &object_value);
+	WData->main = (char *)json_object_get_string(object_value);
+
+	json_object_object_get_ex(object_entry, "description", &object_value);
+	WData->description = (char *)json_object_get_string(object_value);
 }
 
 int
 parsingWeatherData(struct WeatherApi *WApi, struct WeatherData *WData)
 {
 	// Create Weather API URL
-	if (WApi->api == NULL) {
-		WApi->api = (char *)WEATHER_API_KEY;
-	}
+	if (WApi->city == NULL) WApi->city = (char *)WEATHER_DEFAULT_CITY_ID;
+	if (WApi->api == NULL) WApi->api = (char *)WEATHER_API_KEY;
 
 	const char *Url = createWeatherApiURL(WApi);
 	if (Url == NULL) return 1;
@@ -64,43 +84,11 @@ parsingWeatherData(struct WeatherApi *WApi, struct WeatherData *WData)
 	if (json_weather == NULL) return 1;
 
 	// Parsing Json
-	// Root
 	struct json_object *root = json_tokener_parse(json_weather);
 
-	// Object
-	struct json_object *sys;
-	if (!json_object_object_get_ex(root, "sys", &sys) ||
-		!json_object_is_type(sys, json_type_object)) {
+	parsingJsonWeather(root, WData);
 
-		fprintf(stderr, "[ERROR] Parsing json failed to get sys array\n");
-		json_object_put(root);
-		return 1;
-	}
-
-	// Array
-	struct json_object *weather;
-	if (!json_object_object_get_ex(root, "weather", &weather) ||
-		!json_object_is_type(weather, json_type_array)) {
-
-		fprintf(stderr, "[ERROR] Parsing json failed to get weather array\n");
-		return 1;
-	}
-
-	// String value
-	WData->country = json_object_value(sys, "country");
-	WData->city = json_object_value(root, "name");
-
-	char *keyList[WEATHER_ARRAY_CAP] = { NULL };
-	keyList[0] = "main";
-	keyList[1] = "description";
-
-	if (json_array_object_value(root, keyList, "weather") != 0) {
-		return 1;
-	}
-
-	WData->main = keyList[0];
-	WData->description = keyList[1];
-
+	json_object_put(root);
 	free(json_weather);
 	
 	return 0;
