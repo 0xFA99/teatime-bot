@@ -51,6 +51,7 @@ json_array_object_value(struct json_object *json, char *keyList[],
 		if (json_object_object_get_ex(arrayEntry, keyList[0], &mainObject) &&
 			json_object_is_type(mainObject, json_type_string)) {
 
+			printf("%d\n", i);
 			const char *mainValue = json_object_get_string(mainObject);
 			keyList[0] = (char *)mainValue;
 		}
@@ -58,6 +59,7 @@ json_array_object_value(struct json_object *json, char *keyList[],
 		if (json_object_object_get_ex(arrayEntry, keyList[1], &descriptionObject) &&
 			json_object_is_type(descriptionObject, json_type_string)) {
 
+			printf("%d\n", i);
 			const char *descriptionValue = json_object_get_string(descriptionObject);
 			keyList[1] = (char *)descriptionValue;
 		}
